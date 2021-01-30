@@ -17,6 +17,9 @@ namespace MMO_EFCore
         // DBSet<Item> -> ef core한테 알려준다
         // item이라는 db테이블이 있는데, 세부적인 칼럼/키 정보는 item 클래스에 참조해라.
         public DbSet<Item> items { get; set; }
+        public DbSet<Player> players { get; set; }
+        public DbSet<Guild> Guilds { get; set; }
+
 
         // DB ConnectionString
         // 어떤 애들을 어떻게 연결해라. (각종 설정, Auth)
