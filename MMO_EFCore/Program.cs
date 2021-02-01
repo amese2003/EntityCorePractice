@@ -12,9 +12,7 @@ namespace MMO_EFCore
 
             Console.WriteLine("명령어를 입력하세여");
             Console.WriteLine("[0] Force Reset");
-            Console.WriteLine("[1] Eager Loading"); // 즉시
-            Console.WriteLine("[2] Explict Loading"); // 명시적
-            Console.WriteLine("[3] Select Loading"); // Select
+            Console.WriteLine("[1] UpdateTest"); // 즉시
 
             while (true)
             {
@@ -27,13 +25,11 @@ namespace MMO_EFCore
                         DbCommands.InitializeDB(true);
                         break;
                     case "1":
-                        DbCommands.EagerLoading();
+                        DbCommands.UpdateTest();
                         break;
                     case "2":
-                        DbCommands.ExplictLoading();
                         break;
                     case "3":
-                        DbCommands.SelectLoading();
                         break;
                 }
 

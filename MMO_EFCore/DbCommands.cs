@@ -32,6 +32,9 @@ namespace MMO_EFCore
             var faker = new Player() { Name = "Faker" };
             var deft = new Player() { Name = "Deft" };
 
+            //Console.WriteLine(db.Entry(Nero).State);
+            EntityState state = db.Entry(Nero).State;
+
             List<Item> items = new List<Item>()
             {
                 new Item()
@@ -62,90 +65,30 @@ namespace MMO_EFCore
 
             db.items.AddRange(items);
             db.Guilds.Add(guild);
-            db.SaveChanges();
         }
 
+        // Update 3단께
+        // 1) Tracked Entity를 얻어온다
+        // 2) Entity 클래스의 property를 변경 (set)
+        // 3) SaveChanges를 호출!
 
-        // 1 + 2 } 특정 길드에 있는 길드원들이 소지한 모든 아이템을 보고싶다.
-        // 장점 : DB 접근 한번으로 다 로딩 (JOIN)
-        // 단점 : 다 필요한지 모르겠는데 다 가져옴
-        public static void EagerLoading()
-        {
-            Console.WriteLine("길드 이름을 입력하세요");
-            Console.Write(">");
-            string name = Console.ReadLine(); 
-
-            using (var db = new AppDbContext())
-            {
-                Guild guild = db.Guilds.AsNoTracking()
-                    .Where(g => g.GuildName == name)
-                    .Include(g => g.Memebers)
-                        .ThenInclude(p => p.items)
-                        .First();
-
-                foreach(Player player in guild.Memebers)
-                {
-                    Console.WriteLine($"TemplateId({player.items.TemplateId}) Owner({player.Name})");
-                }
-
-            }
-        }
+        // Update를 할때 전체 수정을 할까? 수정 사항이 있는 애들만 할까?
         
-        // 장점 : 필요한 시점에 필요한 데이터만 로딩 가능
-        // 단점 : DB 접근 비용이 너무 쌤
-        public static void ExplictLoading()
+
+        // 1) SaveChanges 호출 할 때 -> 내부적으로 DetectChanges라는 함수 호출
+        // 2) DetectChanges에서 -> 최초 SnapShot / 현재 SnapShot 비교
+
+
+        public static void UpdateTest()
         {
-            Console.WriteLine("길드 이름을 입력하세요");
-            Console.Write(">");
-            string name = Console.ReadLine();
-
-            using (var db = new AppDbContext())
+            using (AppDbContext db = new AppDbContext())
             {
-                Guild guild = db.Guilds
-                    .Where(g=>g.GuildName == name)
-                    .First();
+                var guild = db.Guilds.Single(g => g.GuildName == "T1");
 
-                // 명시적
-                db.Entry(guild).Collection(g => g.Memebers).Load();
+                guild.GuildName = "DWG";
 
-                foreach(Player player in guild.Memebers)
-                {
-                    db.Entry(player).Reference(p => p.items).Load();
-                }
-
-
-                foreach (Player player in guild.Memebers)
-                {
-                    Console.WriteLine($"TemplateId({player.items.TemplateId}) Owner({player.Name})");
-                }
-
+                db.SaveChanges();
             }
         }
-
-
-        // 3) 특정 길드에 있는 길드원의 수는?
-
-
-        // SELECT COUNT(*)
-        // 장점 : 필요한 정보만 쏘옥- 빼올수 있음.
-        // 단점 : 일일히 Select 안에 만들어 줘야함
-
-        public static void SelectLoading()
-        {
-            Console.WriteLine("길드 이름을 입력하세요");
-            Console.Write(">");
-            string name = Console.ReadLine();
-
-            using (var db = new AppDbContext())
-            {
-               var info = db.Guilds
-                    .Where(g => g.GuildName == name)
-                    .MapGuildToDto()
-                    .First();
-
-                Console.WriteLine($"GuildName({info.Name}), MemberCount({info.MemberCount})");
-            }
-        }
-
     }
 }
