@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-
+using Newtonsoft.Json;
 
 namespace MMO_EFCore
 {
@@ -78,17 +78,69 @@ namespace MMO_EFCore
         // 1) SaveChanges 호출 할 때 -> 내부적으로 DetectChanges라는 함수 호출
         // 2) DetectChanges에서 -> 최초 SnapShot / 현재 SnapShot 비교
 
-
-        public static void UpdateTest()
+        public static void ShowGuilds()
         {
             using (AppDbContext db = new AppDbContext())
             {
-                var guild = db.Guilds.Single(g => g.GuildName == "T1");
+                foreach(var guild in db.Guilds.MapGuildToDto().ToList())
+                {
+                    Console.WriteLine($"GuildId({guild.GuildId})  GuildName({guild.Name}) MemberCount({guild.MemberCount})");
+                }
+            }
+        }
 
-                guild.GuildName = "DWG";
+        // 장점 : 최소 정보로 Update
+        // 단점 : Read가 두번!
+
+        public static void UpdateByReload()
+        {
+            ShowGuilds();
+
+            // 외부에서 수정 원하는 데이터의 ID / 정보 넘겨줬다 가정
+            Console.WriteLine("Input GuildId");
+            Console.Write(" > ");
+            int id = int.Parse(Console.ReadLine());
+            Console.WriteLine("Input GuildName");
+            Console.Write(" > ");
+            string name = Console.ReadLine();
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                Guild guild = db.Find<Guild>(id);
+
+                guild.GuildName = name;
 
                 db.SaveChanges();
             }
+
+            Console.WriteLine("업데이트!");
+            ShowGuilds();
+        }
+
+        public static string MakeUpdateJsonStr()
+        {
+            var jsonStr = "{\"GuildId\":1, \"GuildName\":\"Hello\", \"Members\":null}";
+            return jsonStr;
+        }
+
+        // 장점 : DB에 다시 Read를 할 필요 없이 바로 Update
+        // 단점 : 모든 정보를 끌어와야됨. 보안 문제도 있음.
+
+        public static void UpdateByFull()
+        {
+            ShowGuilds();
+
+            string jsonStr = MakeUpdateJsonStr();
+            Guild guild = JsonConvert.DeserializeObject<Guild>(jsonStr);
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                db.Guilds.Update(guild);
+                db.SaveChanges();
+            }
+
+            Console.WriteLine("업데이트!");
+            ShowGuilds();
         }
     }
 }
