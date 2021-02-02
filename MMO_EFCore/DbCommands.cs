@@ -65,82 +65,49 @@ namespace MMO_EFCore
 
             db.items.AddRange(items);
             db.Guilds.Add(guild);
+            db.SaveChanges();
         }
 
-        // Update 3단께
-        // 1) Tracked Entity를 얻어온다
-        // 2) Entity 클래스의 property를 변경 (set)
-        // 3) SaveChanges를 호출!
-
-        // Update를 할때 전체 수정을 할까? 수정 사항이 있는 애들만 할까?
-        
-
-        // 1) SaveChanges 호출 할 때 -> 내부적으로 DetectChanges라는 함수 호출
-        // 2) DetectChanges에서 -> 최초 SnapShot / 현재 SnapShot 비교
-
-        public static void ShowGuilds()
+        public static void ShowItems()
         {
             using (AppDbContext db = new AppDbContext())
             {
-                foreach(var guild in db.Guilds.MapGuildToDto().ToList())
+                foreach (var item in db.items.Include(i => i.Owner).ToList())
                 {
-                    Console.WriteLine($"GuildId({guild.GuildId})  GuildName({guild.Name}) MemberCount({guild.MemberCount})");
+                    if(item.Owner == null)
+                        Console.WriteLine($"itemId({item.ItemId}) TemplateId({item.TemplateId}) Owner(0)");
+                    else
+                        Console.WriteLine($"itemId({item.ItemId}) TemplateId({item.TemplateId}) OwnerID({item.Owner.PlayerId}) Owner({item.Owner.Name})"   );
                 }
             }
         }
 
-        // 장점 : 최소 정보로 Update
-        // 단점 : Read가 두번!
+        // 1) PK가 Nullable이 아니라면?
+        // - Player가 지워지면 FK로 해당 Player 참조하는 item도 같이 삭제됨
+        // 2) PK가 Nullable이라면?
 
-        public static void UpdateByReload()
+        public static void Test()
         {
-            ShowGuilds();
+            ShowItems();
 
-            // 외부에서 수정 원하는 데이터의 ID / 정보 넘겨줬다 가정
-            Console.WriteLine("Input GuildId");
+            Console.WriteLine("Input delete PlayerId");
             Console.Write(" > ");
             int id = int.Parse(Console.ReadLine());
-            Console.WriteLine("Input GuildName");
-            Console.Write(" > ");
-            string name = Console.ReadLine();
 
             using (AppDbContext db = new AppDbContext())
             {
-                Guild guild = db.Find<Guild>(id);
+                 Player player = db.players
+                    .Include(p => p.items)
+                    .Single(p => p.PlayerId == id);
 
-                guild.GuildName = name;
-
+                db.players.Remove(player);
                 db.SaveChanges();
             }
 
-            Console.WriteLine("업데이트!");
-            ShowGuilds();
+            Console.WriteLine("삭제 끝");
+            ShowItems();
         }
 
-        public static string MakeUpdateJsonStr()
-        {
-            var jsonStr = "{\"GuildId\":1, \"GuildName\":\"Hello\", \"Members\":null}";
-            return jsonStr;
-        }
-
-        // 장점 : DB에 다시 Read를 할 필요 없이 바로 Update
-        // 단점 : 모든 정보를 끌어와야됨. 보안 문제도 있음.
-
-        public static void UpdateByFull()
-        {
-            ShowGuilds();
-
-            string jsonStr = MakeUpdateJsonStr();
-            Guild guild = JsonConvert.DeserializeObject<Guild>(jsonStr);
-
-            using (AppDbContext db = new AppDbContext())
-            {
-                db.Guilds.Update(guild);
-                db.SaveChanges();
-            }
-
-            Console.WriteLine("업데이트!");
-            ShowGuilds();
-        }
     }
+
 }
