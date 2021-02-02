@@ -82,15 +82,24 @@ namespace MMO_EFCore
             }
         }
 
-        // 1) PK가 Nullable이 아니라면?
-        // - Player가 지워지면 FK로 해당 Player 참조하는 item도 같이 삭제됨
-        // 2) PK가 Nullable이라면?
+        public static void ShowGuild()
+        {
+            using (AppDbContext db = new AppDbContext())
+            {
+                foreach (var guild in db.Guilds.Include(g=>g.Memebers).ToList())
+                {
+                    Console.WriteLine($"GuildId ({guild.GuildId}) GuildName ({guild.GuildName}) MemberCount({guild.Memebers.Count})");
+                }
+            }
+        }
 
-        public static void Test()
+
+        // Update RelationShip 1v1
+        public static void Update_1v1()
         {
             ShowItems();
 
-            Console.WriteLine("Input delete PlayerId");
+            Console.WriteLine("Input ItemSwitch PlayerId");
             Console.Write(" > ");
             int id = int.Parse(Console.ReadLine());
 
@@ -100,12 +109,48 @@ namespace MMO_EFCore
                     .Include(p => p.items)
                     .Single(p => p.PlayerId == id);
 
-                db.players.Remove(player);
+                if(player.items != null)
+                {
+                    player.items.TemplateId = 550;
+                    player.items.CreateDate = DateTime.Now;
+                }
+
+
+                //player.items = new Item()
+                //{
+                //    TemplateId = 777,
+                //    CreateDate = DateTime.Now
+                //};
+
                 db.SaveChanges();
             }
 
             Console.WriteLine("삭제 끝");
             ShowItems();
+        }
+
+        // Update RelationShip 1vN
+        public static void Update_1vN()
+        {
+            ShowGuild();
+
+            Console.WriteLine("Input GuildID");
+            Console.Write(" > ");
+            int id = int.Parse(Console.ReadLine());
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                Guild guild = db.Guilds
+                    .Include(g => g.Memebers)
+                    .Single(g => g.GuildId == id);
+
+                guild.Memebers.Add(new Player() { Name = "Dopa"});
+                
+                db.SaveChanges();
+            }
+
+            Console.WriteLine("삭제 끝");
+            ShowGuild();
         }
 
     }
