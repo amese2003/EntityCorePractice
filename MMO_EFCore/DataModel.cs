@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -6,7 +7,7 @@ using System.Text;
 
 namespace MMO_EFCore
 {
-    // Relationship Configuration
+    // Shadow Property + Backing Field
 
     // a) Convention (관래)
     // - 각종 형식과 이름 등을 정해진 규칙에 맞게 만들면, EF Core에서 알아서 처리
@@ -17,39 +18,44 @@ namespace MMO_EFCore
     // - OnModelCreating에서 직접 설정을 정의해서 만드는 '귀찮은' 방식
     // - 대신 활용 범위는 가장 넓음
 
+    // Shadow Property
+    // class에는 있지만 Db에 없음 -> [NotMapped] .Ignore()
+    // DB에는 있지만 Class에는 없는 것? -> Shadow Property
+    // 생성 -> .Property<DateTime>("RecoveredDate")
+    // Read/Write -> Property("RecoveredDate").CurrentValue
 
-    // Convention을 이용한 PK 설정
-    // 1) <PrincipalKeyName>                                    PlayerId
-    // 2) <class>PrincipalKeyName>                              PlayerPlayerId
-    // 3) <NavigationalPropertyName><PrincipalKeyName>          OwnerPlayerId OwnerId
-
-    // FK와 nullable
-    // 1) Required Relationship (Not-null)
-    // 삭제할 때 OnDelete 인자를 Cascade 모드로 호출 -> Principal 삭제하면 Dependent도 삭제
-    // 2) Optional Relationship (Nullable)
-    // 삭제할 때 OnDelete 인자를 ClientSetNull 모드로 호출
-    // -> Principal 삭제할 때 Dependent Tracking하고 있으면, FK를 null로 세팅
-    // -> Principal 삭제할 때 Dependent Tracking하고 있지 않으면, Exception
-
-    // Convention 방식으로 못하는 것들
-    // 1) 복합 fk
-    // 2) 다수의 Navigational Property가 같은 클래스를 참조할 때
-    // 3) DB나 삭제 관련 커스터마이징 필요할 때
-
-    // Data Annotation으로 Relationship 설정
-    // [ForeignKey("Prop1")]
-    // [InverseProperty]
-
-    // Fluent Api로 Relationship 설정
-    // .HasOne() .HasMany()
-    // .WithOne() .WithMany()
-    // .HasForeignKey() .IsRequired() .OnDelete()
-    // .HasConstraintName() .HasPrinipalKey()
+    // Backing Field (EF Core)
+    // private Field DB에 매핑하고, public getter로 가공해서 사용
+    // ex) DB에는 JSON 형태로 string을 저장하고, getter는 json을 가공해서 사용
+    // 일반적으로 Fluent Api
 
     // Entity 클래스 이름 = 테이블 이름 = Item
+
+    public struct ItemOption
+    {
+        public int str;
+        public int dex;
+        public int hp;
+    }
+
     [Table("Item")]
     public class Item
     {
+        private string _jsonData;
+        public string JsonData { 
+            get { return _jsonData; }
+        }
+
+        public void SetOption(ItemOption option)
+        {
+            _jsonData = JsonConvert.SerializeObject(option);
+        }
+
+        public ItemOption GetOption()
+        {
+            return JsonConvert.DeserializeObject<ItemOption>(_jsonData);
+        }
+
         public bool SoftDeleted { get; set; }
 
         // 이름 ->  Primary Key
