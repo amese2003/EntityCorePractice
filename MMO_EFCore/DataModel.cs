@@ -6,7 +6,7 @@ using System.Text;
 
 namespace MMO_EFCore
 {
-    // Configuration
+    // Relationship Configuration
 
     // a) Convention (관래)
     // - 각종 형식과 이름 등을 정해진 규칙에 맞게 만들면, EF Core에서 알아서 처리
@@ -17,52 +17,34 @@ namespace MMO_EFCore
     // - OnModelCreating에서 직접 설정을 정의해서 만드는 '귀찮은' 방식
     // - 대신 활용 범위는 가장 넓음
 
-    // ------------------------------- Convention --------------------------------
-    // 1) Entity Class 관련
-    // - public 접근 한정자 + non-static
-    // - property 중에서 public getter를 찾으면서 분석
-    // - property 이름 - table column 이름
-    // 2) 이름, 형식, 크기 관련
-    // - .net 형식 <=> SQL 형식 (int, bool)
-    // - .NET 형식의 Nullable여부를 따라감. (string은 nullable, int non-null, int?)
-    // 3) PK
-    // - id 혹은 <클래스 이름> ID 정의된 property는 pk로 인정 (후자 권장)
-    // - 복합키 (Composite Key) Convention으로 처리 불가.
-    // ----------------------------------------------------------------------------
 
-    // Q1) DB column type, size, nullable
-    // Nullable     [Required]          .IsRequired()
-    // 문자열 길이  [MaxLength(20)]     .HasMaxLength(20);
-    // 문자 형식                        .IsUnicode(true)
+    // Convention을 이용한 PK 설정
+    // 1) <PrincipalKeyName>                                    PlayerId
+    // 2) <class>PrincipalKeyName>                              PlayerPlayerId
+    // 3) <NavigationalPropertyName><PrincipalKeyName>          OwnerPlayerId OwnerId
 
-    // Q2) PK
-    // [Key][Column(Order = 0)] [Key][Column(Order = 1)]
-    // .HasKey(x => new (x.Prop1, x.Prop2))
+    // FK와 nullable
+    // 1) Required Relationship (Not-null)
+    // 삭제할 때 OnDelete 인자를 Cascade 모드로 호출 -> Principal 삭제하면 Dependent도 삭제
+    // 2) Optional Relationship (Nullable)
+    // 삭제할 때 OnDelete 인자를 ClientSetNull 모드로 호출
+    // -> Principal 삭제할 때 Dependent Tracking하고 있으면, FK를 null로 세팅
+    // -> Principal 삭제할 때 Dependent Tracking하고 있지 않으면, Exception
 
-    // Q3) Index
-    // 인덱스 추가                     .HasIndex(p=>p.Prop1)
-    // 복합 인덱스 추가                .HasIndex(p=> new (p.Prop1, p.Prop2))
-    // 인덱스 이름을 정해서 추가       .HasIndex(p=>p.Prop1).HasName("Index_MyProp")
-    // 인덱스 추가                     .HasIndex(p=>p.Prop1).IsUnique()
+    // Convention 방식으로 못하는 것들
+    // 1) 복합 fk
+    // 2) 다수의 Navigational Property가 같은 클래스를 참조할 때
+    // 3) DB나 삭제 관련 커스터마이징 필요할 때
 
-    // Q4) 테이블 이름 설정
-    // DBSet<T> property 이름 or class 이름
-    // [Table("MyTable")]              .ToTable("MyTable")
-    
-    // Q5) 칼럼 이름
-    // property 이름
-    // [Column("MyCol")]                .HasColumnName("MyCol")
+    // Data Annotation으로 Relationship 설정
+    // [ForeignKey("Prop1")]
+    // [InverseProperty]
 
-    // Q6) 코드 모엘링에서는 사용하되, DB 모델링에서는 제외하고싶으면? (property, class 모두)
-    // [NotMapped] .Ignore()
-
-    // Q7) Soft Delete
-    // .HasQueryFilter()
-
-    // 언제 무엇을?
-    // 1) Convention이 가장 무난
-    // 2) Validation과 관련된 부분들은 Data Annotation (직관적, SaveChanges 호출)
-    // 3) 그 외에는 Fluent Api
+    // Fluent Api로 Relationship 설정
+    // .HasOne() .HasMany()
+    // .WithOne() .WithMany()
+    // .HasForeignKey() .IsRequired() .OnDelete()
+    // .HasConstraintName() .HasPrinipalKey()
 
     // Entity 클래스 이름 = 테이블 이름 = Item
     [Table("Item")]
@@ -76,8 +58,12 @@ namespace MMO_EFCore
         public DateTime CreateDate { get; set; }
 
         // 다른 크래스 참조 -> FK (Navigational Property)
-        public int? OwnerId { get; set; }
+        public int TestOwnerId { get; set; }        
         public Player Owner { get; set; }
+
+        public int? TestCreatorId { get; set; }
+        public Player Creator { get; set; }
+
     }
 
     // 클래스 이름 = 테이블 = Player
@@ -90,7 +76,10 @@ namespace MMO_EFCore
         [MaxLength(20)]
         public string Name { get; set; }
 
-        public Item items { get; set; } // 1 : 다
+        [InverseProperty("Owner")]
+        public Item OwnedItem { get; set; } // 1 : 다
+        [InverseProperty("Creator")]
+        public ICollection<Item> CreatedItems { get; set; }
         public Guild Guild; 
 
     }
