@@ -12,6 +12,7 @@ namespace MMO_EFCore
 
             Console.WriteLine("명령어를 입력하세여");
             Console.WriteLine("[0] Force Reset");
+            Console.WriteLine("[1] ShowItems");
 
             while (true)
             {
@@ -24,6 +25,7 @@ namespace MMO_EFCore
                         DbCommands.InitializeDB(true);
                         break;
                     case "1":
+                        DbCommands.ShowItems();
                         break;
                     case "2":
                         break;
@@ -32,8 +34,6 @@ namespace MMO_EFCore
                 }
 
             }
-
-            // CRUD (create - read - update - delete)
         }
     }
 }

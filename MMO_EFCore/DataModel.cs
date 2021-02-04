@@ -7,69 +7,70 @@ using System.Text;
 
 namespace MMO_EFCore
 {
-    // Shadow Property + Backing Field
+    // Entity <-> DB Table 연동하는 다양한 방법
+    // Entity Class 하나를 통으로 Read/Write -> 부담 (select Loading, DTO)
+    
 
-    // a) Convention (관래)
-    // - 각종 형식과 이름 등을 정해진 규칙에 맞게 만들면, EF Core에서 알아서 처리
-    // - 쉽고 빠른데, 모든 경우를 처리하진 못함
-    // B) Data Annotation (데이터 주석)
-    // - class / property 등에 Attribute를 붙여 추가 정보
-    // c) Fluent Api (직접 정리)
-    // - OnModelCreating에서 직접 설정을 정의해서 만드는 '귀찮은' 방식
-    // - 대신 활용 범위는 가장 넓음
+    // 1) Owned Type
+    // - 일반 Class를 Entity에 추가하는 개념
+    // a) 동일한 테이블 추가
+    // - .OwnsOne()
+    // - Relationship이 아닌 Ownership의 개념이기 때문에, .Include()
+    // b) 다른 테이블에 추가
+    // - .OwnsOne().ToTable()
 
-    // Shadow Property
-    // class에는 있지만 Db에 없음 -> [NotMapped] .Ignore()
-    // DB에는 있지만 Class에는 없는 것? -> Shadow Property
-    // 생성 -> .Property<DateTime>("RecoveredDate")
-    // Read/Write -> Property("RecoveredDate").CurrentValue
+    // 2) Table Per Hierarchy (TPM)
+    // - 상속 관계의 여러 class <-> 하나의 테이블에 매핑
+    // ex) Dog, Cat, Bird : Animal
+    // a) Convention
+    // - 일단 class 상속받아 만들고, DbSet 추가
+    // - Discriminator?
+    // b) Fluent Api
+    // - .HasDiscriminator().HasValue()
 
-    // Backing Field (EF Core)
-    // private Field DB에 매핑하고, public getter로 가공해서 사용
-    // ex) DB에는 JSON 형태로 string을 저장하고, getter는 json을 가공해서 사용
-    // 일반적으로 Fluent Api
+    // 3) Table Splitting
+    // - 다수의 Entity Class <-> 하나의 테이블에 매핑
 
-    // Entity 클래스 이름 = 테이블 이름 = Item
-
-    public struct ItemOption
+    public class ItemOption
     {
-        public int str;
-        public int dex;
-        public int hp;
+        public int Str { get; set; }
+        public int Dex { get; set; }
+        public int Hp { get; set; }
     }
+
+    public class ItemDetail
+    {
+        public int ItemDetailId { get; set; }
+        public string Description { get; set; }
+    }
+
+    public enum ItemType
+    {
+        NormalItem,
+        EventItem
+    }
+
 
     [Table("Item")]
     public class Item
     {
-        private string _jsonData;
-        public string JsonData { 
-            get { return _jsonData; }
-        }
-
-        public void SetOption(ItemOption option)
-        {
-            _jsonData = JsonConvert.SerializeObject(option);
-        }
-
-        public ItemOption GetOption()
-        {
-            return JsonConvert.DeserializeObject<ItemOption>(_jsonData);
-        }
-
+        public ItemType Type { get; set; }
         public bool SoftDeleted { get; set; }
+        public ItemOption Option { get; set; }
+        public ItemDetail Detail { get; set; }
 
         // 이름 ->  Primary Key
         public int ItemId { get; set; }
         public int TemplateId { get; set; } // 101 = 집행검 (...)
         public DateTime CreateDate { get; set; }
 
-        // 다른 크래스 참조 -> FK (Navigational Property)
-        public int TestOwnerId { get; set; }        
+        // 다른 클래스 참조 -> FK (Navigational Property)
+        public int OwnerId { get; set; }        
         public Player Owner { get; set; }
-
-        public int? TestCreatorId { get; set; }
-        public Player Creator { get; set; }
-
+    }
+    public class EventItem : Item
+    {
+        public DateTime DestroyDate { get; set; }
     }
 
     // 클래스 이름 = 테이블 = Player
@@ -82,10 +83,7 @@ namespace MMO_EFCore
         [MaxLength(20)]
         public string Name { get; set; }
 
-        [InverseProperty("Owner")]
         public Item OwnedItem { get; set; } // 1 : 다
-        [InverseProperty("Creator")]
-        public ICollection<Item> CreatedItems { get; set; }
         public Guild Guild; 
 
     }
