@@ -14,6 +14,8 @@ namespace MMO_EFCore
     [Table("Item")]
     public class Item
     {
+        public bool SoftDeleted { get; set; }
+
         // 이름 ->  Primary Key
         public int ItemId { get; set; }
         public int TemplateId { get; set; } // 101 = 집행검 (...)
