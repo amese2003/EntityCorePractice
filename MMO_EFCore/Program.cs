@@ -12,7 +12,6 @@ namespace MMO_EFCore
 
             Console.WriteLine("명령어를 입력하세여");
             Console.WriteLine("[0] Force Reset");
-            Console.WriteLine("[1] TestDelete");
 
             while (true)
             {
@@ -25,7 +24,6 @@ namespace MMO_EFCore
                         DbCommands.InitializeDB(true);
                         break;
                     case "1":
-                        DbCommands.TestDelete();
                         break;
                     case "2":
                         break;

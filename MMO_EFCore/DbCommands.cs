@@ -104,22 +104,5 @@ namespace MMO_EFCore
             }
         }
 
-        public static void TestDelete()
-        {
-            ShowItems();
-            Console.WriteLine("Select Delete ItemId");
-            Console.Write(">");
-            int id = int.Parse(Console.ReadLine());
-
-            using (AppDbContext db = new AppDbContext())
-            {
-                Item item = db.items.Find(id);
-                item.SoftDeleted = true;
-                db.SaveChanges();
-            }         
-
-            Console.WriteLine("삭제 끝");
-            ShowItems();
-        }
     }
 }
