@@ -8,9 +8,16 @@ using System.Text;
 
 namespace MMO_EFCore
 {
-    // Backing Field + Relationship
-    // Backing Field -> private field를 DB에 매핑
-    // Navigational Property 에서도 사용 가능.
+    // User Defined Function
+    // 우리가 직접 만든 SQL을 호출하게 하는 기능
+    // - 연산을 DB쪽에서 하도록 떠넘기고 싶다.
+    // - EF Core 쿼리가 약간 비효율적이다?
+
+    // Steps
+    // 1) Configuration
+    // - static 함수를 만들고 EF Core 들고
+    // 2) Database Setup
+    // 3) 사용
 
     public class ItemReview
     {
@@ -32,22 +39,8 @@ namespace MMO_EFCore
         public int OwnerId { get; set; }        
         public Player Owner { get; set; }
 
-        public double? AverageScore { get; set; } // 평균 별점
+        public ICollection<ItemReview> Reviews { get; set; }
 
-        private readonly List<ItemReview> _reviews = new List<ItemReview>();
-        public IEnumerable<ItemReview> Reviews { get { return _reviews.ToList(); } }
-
-        public void AddReview(ItemReview review)
-        {
-            _reviews.Add(review);
-            AverageScore = _reviews.Average(r => r.Score);
-        }
-
-        public void RemoveReview(ItemReview review)
-        {
-            _reviews.Remove(review);
-            AverageScore = _reviews.Any() ? _reviews.Average(r => r.Score) : (double?) null;
-        }
     }
 
     public class Knight

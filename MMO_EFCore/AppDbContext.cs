@@ -48,6 +48,9 @@ namespace MMO_EFCore
 				.Metadata
 				.FindNavigation("Reviews")
 				.SetPropertyAccessMode(PropertyAccessMode.Field);
+
+			// DbFunction
+			builder.HasDbFunction(() => Program.GetAverageReviewScore(0));
 		}
 	}
 }
