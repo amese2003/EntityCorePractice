@@ -40,12 +40,14 @@ namespace MMO_EFCore
     // - Update-Database [options]
 
     // 특정 Migration으로 Sync (Update-Database [Name])
-    
+
     // 마지막 Migration 삭제 (Remove-Migration) 
 
     // 2) Database-First
 
     // 3) SQL-First
+    // -- Script-Migration [From] [To] [Options]
+    // -- DB 끼리의 비교를 이용하여 SQL 추출
 
     [Table("Item")]
     public class Item
