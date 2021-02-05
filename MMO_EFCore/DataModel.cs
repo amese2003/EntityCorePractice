@@ -3,61 +3,25 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 using System.Text;
 
 namespace MMO_EFCore
 {
-    // Entity <-> DB Table 연동하는 다양한 방법
-    // Entity Class 하나를 통으로 Read/Write -> 부담 (select Loading, DTO)
-    
+    // Backing Field + Relationship
+    // Backing Field -> private field를 DB에 매핑
+    // Navigational Property 에서도 사용 가능.
 
-    // 1) Owned Type
-    // - 일반 Class를 Entity에 추가하는 개념
-    // a) 동일한 테이블 추가
-    // - .OwnsOne()
-    // - Relationship이 아닌 Ownership의 개념이기 때문에, .Include()
-    // b) 다른 테이블에 추가
-    // - .OwnsOne().ToTable()
-
-    // 2) Table Per Hierarchy (TPM)
-    // - 상속 관계의 여러 class <-> 하나의 테이블에 매핑
-    // ex) Dog, Cat, Bird : Animal
-    // a) Convention
-    // - 일단 class 상속받아 만들고, DbSet 추가
-    // - Discriminator?
-    // b) Fluent Api
-    // - .HasDiscriminator().HasValue()
-
-    // 3) Table Splitting
-    // - 다수의 Entity Class <-> 하나의 테이블에 매핑
-
-    public class ItemOption
+    public class ItemReview
     {
-        public int Str { get; set; }
-        public int Dex { get; set; }
-        public int Hp { get; set; }
+        public int ItemReviewId { get; set; }
+        public int Score { get; set; } // 0-5점
     }
-
-    public class ItemDetail
-    {
-        public int ItemDetailId { get; set; }
-        public string Description { get; set; }
-    }
-
-    public enum ItemType
-    {
-        NormalItem,
-        EventItem
-    }
-
 
     [Table("Item")]
     public class Item
     {
-        public ItemType Type { get; set; }
         public bool SoftDeleted { get; set; }
-        public ItemOption Option { get; set; }
-        public ItemDetail Detail { get; set; }
 
         // 이름 ->  Primary Key
         public int ItemId { get; set; }
@@ -67,10 +31,33 @@ namespace MMO_EFCore
         // 다른 클래스 참조 -> FK (Navigational Property)
         public int OwnerId { get; set; }        
         public Player Owner { get; set; }
+
+        public double? AverageScore { get; set; } // 평균 별점
+
+        private readonly List<ItemReview> _reviews = new List<ItemReview>();
+        public IEnumerable<ItemReview> Reviews { get { return _reviews.ToList(); } }
+
+        public void AddReview(ItemReview review)
+        {
+            _reviews.Add(review);
+            AverageScore = _reviews.Average(r => r.Score);
+        }
+
+        public void RemoveReview(ItemReview review)
+        {
+            _reviews.Remove(review);
+            AverageScore = _reviews.Any() ? _reviews.Average(r => r.Score) : (double?) null;
+        }
     }
-    public class EventItem : Item
+
+    public class Knight
     {
-        public DateTime DestroyDate { get; set; }
+        private int _hp;
+
+        public void SetHP(int hp)
+        {
+            _hp = hp;
+        }
     }
 
     // 클래스 이름 = 테이블 = Player
