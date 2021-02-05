@@ -43,7 +43,7 @@ namespace MMO_EFCore
 
         public static void CreateTestData(AppDbContext db)
         {
-            var Nero = new Player() { Name = "Nero" };
+            var Nero = new Player() {  };
             var faker = new Player() { Name = "Faker" };
             var deft = new Player() { Name = "Deft" };
 
@@ -55,35 +55,18 @@ namespace MMO_EFCore
                 new Item()
                 {
                     TemplateId = 101,
-                    CreateDate = DateTime.Now,
                     Owner = Nero
                 },
                 new Item()
                 {
                     TemplateId = 102,
-                    CreateDate = DateTime.Now,
                     Owner = faker,
                 },
                 new Item()
                 {
                     TemplateId = 103,
-                    CreateDate = DateTime.Now,
                     Owner = deft
                 }
-            };
-
-            items[0].Reviews = new List<ItemReview>()
-            {
-                new ItemReview() {Score = 5},
-                new ItemReview() {Score = 3},
-                new ItemReview() {Score = 2},
-            };
-
-            items[1].Reviews = new List<ItemReview>()
-            {
-                new ItemReview() {Score = 1},
-                new ItemReview() {Score = 1},
-                new ItemReview() {Score = 0},
             };
 
             Guild guild = new Guild()
