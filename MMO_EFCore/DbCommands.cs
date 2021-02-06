@@ -43,7 +43,7 @@ namespace MMO_EFCore
 
         public static void CreateTestData(AppDbContext db)
         {
-            var Nero = new Player() {  };
+            var Nero = new Player() { Name = "Nero" };
             var faker = new Player() { Name = "Faker" };
             var deft = new Player() { Name = "Deft" };
 
@@ -77,6 +77,42 @@ namespace MMO_EFCore
 
             db.Items.AddRange(items);
             db.Guilds.Add(guild);
+
+            Console.WriteLine("1번)" + db.Entry(Nero).State);            
+
+            db.SaveChanges();
+
+
+            // Add test
+            {
+                Item item = new Item()
+                {
+                    TemplateId = 500,
+                    Owner = Nero
+                };
+
+                db.Items.Add(item);
+                // 아이템 추가 -> 간접적으로 Player 영향
+                // Player는 Tracking 상태, FK? 필요 없음
+                Console.WriteLine("2번)" + db.Entry(Nero).State);
+            }
+
+            // Delete tEST
+            {
+                Player p = db.Players.First();
+
+                // DB는 이 새로운 길드의 존재도 모름 (DB 키 없음 0);
+                p.Guild = new Guild() { GuildName = "곧삭제될길드" };
+                // 위에서 아이템이 이미 DB에 들어간 상태 (DB 키 있음)
+                p.OwnedItem = items[0];
+
+                db.Players.Remove(p);
+
+                // Player를 직접적으로 삭제하니까...
+                Console.WriteLine("3번)" + db.Entry(p).State); // Deleted
+                Console.WriteLine("4번)" + db.Entry(p.Guild).State); // Added
+                Console.WriteLine("5번)" + db.Entry(p.OwnedItem).State); //
+            }
 
             db.SaveChanges();
         }
