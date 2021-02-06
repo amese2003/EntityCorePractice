@@ -40,6 +40,23 @@ namespace MMO_EFCore
     // - (DB에 의해 생선된 Key) && (C# 기본값 아님) -> 필요에 따라 Unchanged / Modified / Delete
     // - (DB에 의해 생성된 Key 없음) || C# 기본값 -> Added
 
+    // - 3) Update / UpdateRange
+    // - EF에서 Entity를 Update하는 기본적인 방법은 Update가 아님.
+    // - Tracked Entity 얻어오고 -> property 수정 -> SaveChanges
+    // - Update는 Untracked Entity를 통으로 업데이트 할 때 (Disconnected State)
+
+    // EF Core에서 Update하면 일어나는 Step
+    // 1) Update 호출
+    // 2) Entity State = Modified로 변경
+    // 3) 모든 Non-Relational Property의 isModified = true로 변경
+    // - (DB에 의해 생선된 Key) && (C# 기본값 아님) -> 필요에 따라 Unchanged / Modified / Delete
+    // - (DB에 의해 생성된 Key 없음) || C# 기본값 -> Added
+
+    // - 4) Attach
+    // - Untracked Entity를 Tracked Entity로 변경
+    // - (DB에 의해 생선된 Key) && (C# 기본값 아님) -> Unchanged
+    // - (DB에 의해 생성된 Key 없음) || C# 기본값 -> Added
+
     [Table("Item")]
     public class Item
     {

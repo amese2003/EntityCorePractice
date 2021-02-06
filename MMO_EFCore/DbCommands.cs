@@ -57,16 +57,7 @@ namespace MMO_EFCore
                     TemplateId = 101,
                     Owner = Nero
                 },
-                new Item()
-                {
-                    TemplateId = 102,
-                    Owner = faker,
-                },
-                new Item()
-                {
-                    TemplateId = 103,
-                    Owner = deft
-                }
+                
             };
 
             Guild guild = new Guild()
@@ -152,18 +143,46 @@ namespace MMO_EFCore
             }
         }
 
-        public static void CalcAverage()
+        public static void TestUpdateAttach()
         {
             using (AppDbContext db = new AppDbContext())
             {
-                foreach(var average in db.Items.Select(i => Program.GetAverageReviewScore(i.ItemId)))
+                // Update Test
                 {
-                    if (average == null)
-                        Console.WriteLine("No Review!");
-                    else
-                        Console.WriteLine($"Average : {average.Value}");
+                    // Disconnected
+                    Player p = new Player();
+                    p.PlayerId = 2;
+                    p.Name = "FakerSenpai";
+
+                    // Attach 아직 DB는 이 새로운 길드의 존재도 모름 (DB키 없음)
+                    p.Guild = new Guild() { GuildName = "Update Guild" };
+
+                    Console.WriteLine("6번)" + db.Entry(p.Guild).State); // Detached
+                    db.Players.Update(p);
+                    Console.WriteLine("7번)" + db.Entry(p.Guild).State); // Added
                 }
+
+
+                // Attach Test
+                {
+                    Player p = new Player();
+
+                    // Temp
+                    p.PlayerId = 3;
+                    
+                    p.Guild = new Guild() { GuildName = "Attach Guild" };
+
+
+                    Console.WriteLine("8번)" + db.Entry(p.Guild).State); // Detached
+                    db.Players.Attach(p);
+                    p.Name = "Deft-_-";
+                    Console.WriteLine("9번)" + db.Entry(p.Guild).State); // Added
+                }
+
+                db.SaveChanges();
             }
+
+           
         }
 
     }
