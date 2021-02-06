@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,9 +30,12 @@ namespace MMO_EFCore
 		// 어떤 DB를 어떻게 연결해라~ (각종 설정, Authorization 등)
 		public const string ConnectionString = "Data Source=(localdb)\\ProjectsV13;Initial Catalog=EFCoreDb;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
 
+		public static readonly ILoggerFactory MyLoggerFactory = LoggerFactory.Create(builder => { builder.AddConsole(); });
 		protected override void OnConfiguring(DbContextOptionsBuilder options)
 		{
-			options.UseSqlServer(ConnectionString);
+			options
+				.UseLoggerFactory(MyLoggerFactory)				
+				.UseSqlServer(ConnectionString);
 		}
 
 		protected override void OnModelCreating(ModelBuilder builder)
