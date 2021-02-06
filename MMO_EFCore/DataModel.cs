@@ -10,25 +10,22 @@ using System.Text;
 
 namespace MMO_EFCore
 {
-    // State 조작
+    // SQL 직접 호출
 
-    // - 직접 State를 조작할 수 있다. (ex. 최적화 등)
-    // ex ) Entry().State = EntityState.Added
-    // ex ) Entry().Property("").IsModified = true
+    // 경우에 따라서 직접 만든 SQL 호출할 수 있다
+    // ex) LINQ로 처리할 수 없는 것 -> Stored Procedure 호출 등
+    // ex) 성능 최적화 등
 
-    // - TrackGraph
-    // Relationship이 있는 Untracked Entity의 State 조작
-    // ex) 전체 데이터 중에서 일바만 갱신하고 싶다거나?
+    // 1) FromSql -> FromSqlRaw / FromSqlInterpolated
+    // - EF Core 쿼리에 Raw SQL 추가
 
-    // - ChangeTracker
-    // 상태 정보의 변화를 감지하고 싶을 때 유용
-    // ex) Player의 Name이 바뀔 때 로그를 찍고 시파
-    // ex) Validation 코드를 넣고 싶다거나
-    // ex) Player가 생성된 시점을 CreateTime으로 정보를 추가하고싶다.
+    // 2) ExecuteSqlCommand -> ExecuteSqlRaw / ExecutedSqlInterpolated
+    // - Non-Query (SELECT가 아닌) SQL
 
-    // Steps
-    // 1) SaveChanges를 override
-    // 2) ChangeTracker.Entries를 이용해서 바뀔 정보 추출 / 사용
+    // 3) Reload
+    // - Tracked Entity가 이미 있다.
+    // - 2)번에 의하여 db정보가 변경 되었다면?
+    // Reload
 
     [Table("Item")]
     public class Item

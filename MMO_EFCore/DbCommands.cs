@@ -108,51 +108,48 @@ namespace MMO_EFCore
             }
         }
 
-        public static void TestUpdateAttach()
+        public static void Test()
         {
             using (AppDbContext db = new AppDbContext())
             {
-                // State 조작
+                // FromSql
                 {
-                    Player p = new Player() { Name = "StateTest" };
-                    db.Entry(p).State = EntityState.Added; // Tracked로 변환
-                    db.SaveChanges();
+                    string name = "Nero";
+                    string name2 = "Anything OR [=]";
+                    // SQL Injection (Web Hacking)
+
+                    var list = db.Players
+                        .FromSqlRaw("SELECT * FROM dbo.Player WHERE Name = {0}", name)
+                        .Include(p => p.OwnedItem)
+                        .ToList();
+
+                    foreach(var p in list)
+                    {
+                        Console.WriteLine($"{p.Name} {p.PlayerId}");
+                    }
+
+                    // String Interpolation c# 6.0
+                    var list2 = db.Players
+                        .FromSqlInterpolated($"SELECT * FROM dbo.Player WHERE Name = {name}")
+                        .ToList();
+
+                    foreach (var p in list2)
+                    {
+                        Console.WriteLine($"{p.Name} {p.PlayerId}");
+                    }
                 }
 
-                // TrackGraph
+                //  ExecuteSqlCommand (Non-Query SQL)
                 {
-                    // Disconnected 상태에서,
-                    // 모두 갱신하는게 아니라 플레이어 이름'만' 갱신하고 싶다면?
+                    Player p = db.Players.Single(p => p.Name == "Faker");
 
-                    Player p = new Player()
-                    {
-                        PlayerId = 2,
-                        Name = "Faker_New"
-                    };
+                    string prevName = "Faker";
+                    string after = "Faker_New";
+                    db.Database.ExecuteSqlInterpolated($"UPDATE dbo.Player SET Name={after} WHERE Name = {prevName}");
 
-                    p.OwnedItem = new Item() { TemplateId = 777 }; // 아이템 정보 가정
-                    p.Guild = new Guild() { GuildName = "TrackGraphGuild" }; // 길드 정보 가정
-
-                    db.ChangeTracker.TrackGraph(p, e =>
-                    {
-                        if (e.Entry.Entity is Player)
-                        {
-                            e.Entry.State = EntityState.Unchanged;
-                            e.Entry.Property("Name").IsModified = true;
-                        }
-                        else if (e.Entry.Entity is Guid)
-                        {
-                            e.Entry.State = EntityState.Unchanged;
-                        }
-                        else if (e.Entry.Entity is Item)
-                        {
-                            e.Entry.State = EntityState.Unchanged;
-                        }
-                    });
-
-                    db.SaveChanges();
+                    db.Entry(p).Reload();
                 }
-            }           
+            }
         }
     }
 }
