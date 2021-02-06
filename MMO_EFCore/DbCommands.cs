@@ -69,41 +69,6 @@ namespace MMO_EFCore
             db.Items.AddRange(items);
             db.Guilds.Add(guild);
 
-            Console.WriteLine("1번)" + db.Entry(Nero).State);            
-
-            db.SaveChanges();
-
-
-            // Add test
-            {
-                Item item = new Item()
-                {
-                    TemplateId = 500,
-                    Owner = Nero
-                };
-
-                db.Items.Add(item);
-                // 아이템 추가 -> 간접적으로 Player 영향
-                // Player는 Tracking 상태, FK? 필요 없음
-                Console.WriteLine("2번)" + db.Entry(Nero).State);
-            }
-
-            // Delete tEST
-            {
-                Player p = db.Players.First();
-
-                // DB는 이 새로운 길드의 존재도 모름 (DB 키 없음 0);
-                p.Guild = new Guild() { GuildName = "곧삭제될길드" };
-                // 위에서 아이템이 이미 DB에 들어간 상태 (DB 키 있음)
-                p.OwnedItem = items[0];
-
-                db.Players.Remove(p);
-
-                // Player를 직접적으로 삭제하니까...
-                Console.WriteLine("3번)" + db.Entry(p).State); // Deleted
-                Console.WriteLine("4번)" + db.Entry(p.Guild).State); // Added
-                Console.WriteLine("5번)" + db.Entry(p.OwnedItem).State); //
-            }
 
             db.SaveChanges();
         }
@@ -147,43 +112,47 @@ namespace MMO_EFCore
         {
             using (AppDbContext db = new AppDbContext())
             {
-                // Update Test
+                // State 조작
                 {
-                    // Disconnected
-                    Player p = new Player();
-                    p.PlayerId = 2;
-                    p.Name = "FakerSenpai";
-
-                    // Attach 아직 DB는 이 새로운 길드의 존재도 모름 (DB키 없음)
-                    p.Guild = new Guild() { GuildName = "Update Guild" };
-
-                    Console.WriteLine("6번)" + db.Entry(p.Guild).State); // Detached
-                    db.Players.Update(p);
-                    Console.WriteLine("7번)" + db.Entry(p.Guild).State); // Added
+                    Player p = new Player() { Name = "StateTest" };
+                    db.Entry(p).State = EntityState.Added; // Tracked로 변환
+                    db.SaveChanges();
                 }
 
-
-                // Attach Test
+                // TrackGraph
                 {
-                    Player p = new Player();
+                    // Disconnected 상태에서,
+                    // 모두 갱신하는게 아니라 플레이어 이름'만' 갱신하고 싶다면?
 
-                    // Temp
-                    p.PlayerId = 3;
-                    
-                    p.Guild = new Guild() { GuildName = "Attach Guild" };
+                    Player p = new Player()
+                    {
+                        PlayerId = 2,
+                        Name = "Faker_New"
+                    };
 
+                    p.OwnedItem = new Item() { TemplateId = 777 }; // 아이템 정보 가정
+                    p.Guild = new Guild() { GuildName = "TrackGraphGuild" }; // 길드 정보 가정
 
-                    Console.WriteLine("8번)" + db.Entry(p.Guild).State); // Detached
-                    db.Players.Attach(p);
-                    p.Name = "Deft-_-";
-                    Console.WriteLine("9번)" + db.Entry(p.Guild).State); // Added
+                    db.ChangeTracker.TrackGraph(p, e =>
+                    {
+                        if (e.Entry.Entity is Player)
+                        {
+                            e.Entry.State = EntityState.Unchanged;
+                            e.Entry.Property("Name").IsModified = true;
+                        }
+                        else if (e.Entry.Entity is Guid)
+                        {
+                            e.Entry.State = EntityState.Unchanged;
+                        }
+                        else if (e.Entry.Entity is Item)
+                        {
+                            e.Entry.State = EntityState.Unchanged;
+                        }
+                    });
+
+                    db.SaveChanges();
                 }
-
-                db.SaveChanges();
-            }
-
-           
+            }           
         }
-
     }
 }

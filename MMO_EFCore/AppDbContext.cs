@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MMO_EFCore
@@ -53,5 +54,21 @@ namespace MMO_EFCore
                 .HasDefaultValueSql("GETDATE()");
 
         }
-	}
+
+        public override int SaveChanges()
+        {
+			var entities = ChangeTracker.Entries()
+				.Where(e => e.State == EntityState.Added);
+
+			foreach(var entity in entities)
+            {
+				ILogEntity tracked = entity.Entity as ILogEntity;
+
+				if (tracked != null)
+					tracked.SetCreateTime();
+            }
+
+            return base.SaveChanges();
+        }
+    }
 }
